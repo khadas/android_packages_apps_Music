@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.MergeCursor;
@@ -53,6 +54,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -75,6 +77,7 @@ public class PlaylistBrowserActivity extends ListActivity
 
     private boolean mCreateShortcut;
     private ServiceToken mToken;
+    private View mItemSelectedView = null;
 
     public PlaylistBrowserActivity()
     {
@@ -142,6 +145,22 @@ public class PlaylistBrowserActivity extends ListActivity
         ListView lv = getListView();
         lv.setOnCreateContextMenuListener(this);
         lv.setTextFilterEnabled(true);
+        lv.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mItemSelectedView = view;
+                setItemColor(parent);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        lv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                setItemColor(v);
+            }
+        });
 
         mAdapter = (PlaylistListAdapter) getLastNonConfigurationInstance();
         if (mAdapter == null) {
@@ -174,7 +193,17 @@ public class PlaylistBrowserActivity extends ListActivity
             }
         }
     }
-    
+
+    private void setItemColor(View parent) {
+        if (!parent.isInTouchMode()) {
+            if (parent.isFocused()) {
+                mAdapter.setTextViewColor(mItemSelectedView, true);
+            } else {
+                mAdapter.setTextViewColor(mItemSelectedView, false);
+            }
+        }
+    }
+
     @Override
     public Object onRetainNonConfigurationInstance() {
         PlaylistListAdapter a = mAdapter;
@@ -548,6 +577,7 @@ public class PlaylistBrowserActivity extends ListActivity
         private AsyncQueryHandler mQueryHandler;
         private String mConstraint = null;
         private boolean mConstraintIsValid = false;
+        private ColorStateList mLine1Colors = null;
 
         class QueryHandler extends AsyncQueryHandler {
             QueryHandler(ContentResolver res) {
@@ -584,6 +614,39 @@ public class PlaylistBrowserActivity extends ListActivity
         
         public AsyncQueryHandler getQueryHandler() {
             return mQueryHandler;
+        }
+
+        public void setTextViewColor(View view, boolean defaultColor) {
+            TextView tv = (TextView)view.findViewById(R.id.line1);
+            if (tv != null && mLine1Colors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mLine1Colors);
+                else
+                    tv.setTextColor(mLine1Colors.getDefaultColor());
+            }
+        }
+
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            View v = super.newView(context, cursor, parent);
+
+            TextView tv = (TextView) v.findViewById(R.id.line1);
+            tv.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    if (!v.isInTouchMode() && mLine1Colors == null && ((TextView)v).getTextColors() != null) {
+                        mLine1Colors = ((TextView)v).getTextColors();
+                        ((TextView)v).setTextColor(mLine1Colors.getDefaultColor());
+                    }
+                }
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    if (mLine1Colors != null)
+                        mLine1Colors = null;
+                }
+            });
+
+            return v;
         }
 
         @Override

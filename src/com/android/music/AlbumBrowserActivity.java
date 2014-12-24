@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -62,6 +63,7 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView;
 
 import java.text.Collator;
 
@@ -79,6 +81,7 @@ public class AlbumBrowserActivity extends ListActivity
     private static int mLastListPosCourse = -1;
     private static int mLastListPosFine = -1;
     private ServiceToken mToken;
+    private View mItemSelectedView = null;
 
     public AlbumBrowserActivity()
     {
@@ -112,6 +115,22 @@ public class AlbumBrowserActivity extends ListActivity
         ListView lv = getListView();
         lv.setOnCreateContextMenuListener(this);
         lv.setTextFilterEnabled(true);
+        lv.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mItemSelectedView = view;
+                setItemColor(parent);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        lv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                setItemColor(v);
+            }
+        });
 
         mAdapter = (AlbumListAdapter) getLastNonConfigurationInstance();
         if (mAdapter == null) {
@@ -134,6 +153,16 @@ public class AlbumBrowserActivity extends ListActivity
                 init(mAlbumCursor);
             } else {
                 getAlbumCursor(mAdapter.getQueryHandler(), null);
+            }
+        }
+    }
+
+    private void setItemColor(View parent) {
+        if (!parent.isInTouchMode() && mItemSelectedView != null) {
+            if (parent.isFocused()) {
+                mAdapter.setTextViewColor(mItemSelectedView, true);
+            } else {
+                mAdapter.setTextViewColor(mItemSelectedView, false);
             }
         }
     }
@@ -506,7 +535,9 @@ public class AlbumBrowserActivity extends ListActivity
         private AsyncQueryHandler mQueryHandler;
         private String mConstraint = null;
         private boolean mConstraintIsValid = false;
-        
+        private ColorStateList mLine1Colors = null;
+        private ColorStateList mLine2Colors = null;
+
         static class ViewHolder {
             TextView line1;
             TextView line2;
@@ -572,12 +603,57 @@ public class AlbumBrowserActivity extends ListActivity
             return mQueryHandler;
         }
 
+        public void setTextViewColor(View view, boolean defaultColor) {
+            TextView tv = (TextView)view.findViewById(R.id.line1);
+            if (tv != null && mLine1Colors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mLine1Colors);
+                else
+                    tv.setTextColor(mLine1Colors.getDefaultColor());
+            }
+            tv = (TextView)view.findViewById(R.id.line2);
+            if (tv != null && mLine2Colors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mLine2Colors);
+                else
+                    tv.setTextColor(mLine2Colors.getDefaultColor());
+            }
+        }
+
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
            View v = super.newView(context, cursor, parent);
            ViewHolder vh = new ViewHolder();
            vh.line1 = (TextView) v.findViewById(R.id.line1);
+           vh.line1.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+               @Override
+               public void onViewAttachedToWindow(View v) {
+                   if (!v.isInTouchMode() && mLine1Colors == null && ((TextView)v).getTextColors() != null) {
+                       mLine1Colors = ((TextView)v).getTextColors();
+                       ((TextView)v).setTextColor(mLine1Colors.getDefaultColor());
+                   }
+               }
+               @Override
+               public void onViewDetachedFromWindow(View v) {
+                   if (mLine1Colors != null)
+                       mLine1Colors = null;
+               }
+           });
            vh.line2 = (TextView) v.findViewById(R.id.line2);
+           vh.line2.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+               @Override
+               public void onViewAttachedToWindow(View v) {
+                   if (!v.isInTouchMode() && mLine2Colors == null && ((TextView)v).getTextColors() != null) {
+                       mLine2Colors = ((TextView)v).getTextColors();
+                       ((TextView)v).setTextColor(mLine2Colors.getDefaultColor());
+                   }
+               }
+               @Override
+               public void onViewDetachedFromWindow(View v) {
+                   if (mLine2Colors != null)
+                       mLine2Colors = null;
+               }
+           });
            vh.play_indicator = (ImageView) v.findViewById(R.id.play_indicator);
            vh.icon = (ImageView) v.findViewById(R.id.icon);
            vh.icon.setBackgroundDrawable(mDefaultAlbumIcon);

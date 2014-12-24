@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.res.ColorStateList;
 import android.database.AbstractCursor;
 import android.database.CharArrayBuffer;
 import android.database.Cursor;
@@ -61,6 +62,7 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView;
 
 import java.text.Collator;
 import java.util.Arrays;
@@ -101,6 +103,7 @@ public class TrackBrowserActivity extends ListActivity
     private static int mLastListPosFine = -1;
     private boolean mUseLastListPos = false;
     private ServiceToken mToken;
+    private View mItemSelectedView = null;
 
     public TrackBrowserActivity()
     {
@@ -163,6 +166,22 @@ public class TrackBrowserActivity extends ListActivity
         mTrackList = getListView();
         mTrackList.setOnCreateContextMenuListener(this);
         mTrackList.setCacheColorHint(0);
+        mTrackList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mItemSelectedView = view;
+                setItemColor(parent);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        mTrackList.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                setItemColor(v);
+            }
+        });
         if (mEditMode) {
             ((TouchInterceptor) mTrackList).setDropListener(mDropListener);
             ((TouchInterceptor) mTrackList).setRemoveListener(mRemoveListener);
@@ -236,6 +255,17 @@ public class TrackBrowserActivity extends ListActivity
         // we can't really function without the service, so don't
         finish();
     }
+
+    private void setItemColor(View parent) {
+        if (!parent.isInTouchMode() && mItemSelectedView != null) {
+            if (parent.isFocused()) {
+                mAdapter.setTextViewColor(mItemSelectedView, true);
+            } else {
+                mAdapter.setTextViewColor(mItemSelectedView, false);
+            }
+        }
+    }
+
 
     @Override
     public Object onRetainNonConfigurationInstance() {
@@ -1346,7 +1376,10 @@ public class TrackBrowserActivity extends ListActivity
         private TrackQueryHandler mQueryHandler;
         private String mConstraint = null;
         private boolean mConstraintIsValid = false;
-        
+        private ColorStateList mLine1Colors = null;
+        private ColorStateList mLine2Colors = null;
+        private ColorStateList mDurationColors = null;
+
         static class ViewHolder {
             TextView line1;
             TextView line2;
@@ -1395,8 +1428,7 @@ public class TrackBrowserActivity extends ListActivity
             protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
                 //Log.i("@@@", "query complete: " + cursor.getCount() + "   " + mActivity);
                 mActivity.init(cursor, cookie != null);
-                if (token == 0 && cookie != null && cursor != null &&
-                    !cursor.isClosed() && cursor.getCount() >= 100) {
+                if (token == 0 && cookie != null && cursor != null && !cursor.isClosed() && cursor.getCount() >= 100) {
                     QueryArgs args = (QueryArgs) cookie;
                     startQuery(1, null, args.uri, args.projection, args.selection,
                             args.selectionArgs, args.orderBy);
@@ -1448,6 +1480,30 @@ public class TrackBrowserActivity extends ListActivity
             }
         }
 
+        public void setTextViewColor(View view, boolean defaultColor) {
+            TextView tv = (TextView)view.findViewById(R.id.line1);
+            if (tv != null && mLine1Colors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mLine1Colors);
+                else
+                    tv.setTextColor(mLine1Colors.getDefaultColor());
+            }
+            tv = (TextView)view.findViewById(R.id.line2);
+            if (tv != null && mLine2Colors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mLine2Colors);
+                else
+                    tv.setTextColor(mLine2Colors.getDefaultColor());
+            }
+            tv = (TextView)view.findViewById(R.id.duration);
+            if (tv != null && mDurationColors != null) {
+                if (defaultColor)
+                    tv.setTextColor(mDurationColors);
+                else
+                    tv.setTextColor(mDurationColors.getDefaultColor());
+            }
+        }
+
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
             View v = super.newView(context, cursor, parent);
@@ -1456,8 +1512,50 @@ public class TrackBrowserActivity extends ListActivity
             
             ViewHolder vh = new ViewHolder();
             vh.line1 = (TextView) v.findViewById(R.id.line1);
+            vh.line1.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    if (!v.isInTouchMode() && mLine1Colors == null && ((TextView)v).getTextColors() != null) {
+                        mLine1Colors = ((TextView)v).getTextColors();
+                        ((TextView)v).setTextColor(mLine1Colors.getDefaultColor());
+                    }
+                }
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    if (mLine1Colors != null)
+                        mLine1Colors = null;
+                }
+            });
             vh.line2 = (TextView) v.findViewById(R.id.line2);
+            vh.line2.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    if (!v.isInTouchMode() && mLine2Colors == null && ((TextView)v).getTextColors() != null) {
+                        mLine2Colors = ((TextView)v).getTextColors();
+                        ((TextView)v).setTextColor(mLine2Colors.getDefaultColor());
+                    }
+                }
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    if (mLine2Colors != null)
+                        mLine2Colors = null;
+                }
+            });
             vh.duration = (TextView) v.findViewById(R.id.duration);
+            vh.duration.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    if (!v.isInTouchMode() && mDurationColors == null && ((TextView)v).getTextColors() != null) {
+                        mDurationColors = ((TextView)v).getTextColors();
+                        ((TextView)v).setTextColor(mDurationColors.getDefaultColor());
+                    }
+                }
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    if (mDurationColors != null)
+                        mDurationColors = null;
+                }
+            });
             vh.play_indicator = (ImageView) v.findViewById(R.id.play_indicator);
             vh.buffer1 = new CharArrayBuffer(100);
             vh.buffer2 = new char[200];
