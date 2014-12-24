@@ -19,6 +19,7 @@
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="no_lyric">歌词不存在</string>
     <string name="onesong" msgid="8336826100414159413">"1 首歌曲"</string>
   <plurals name="Nsongs">
     <item quantity="other" msgid="5798230388116542981">"<xliff:g id="COUNT">%d</xliff:g> 首歌曲"</item>

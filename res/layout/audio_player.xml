@@ -57,10 +57,24 @@
                 android:layout_width="85dip"
                 android:layout_height="54dip"
                 android:layout_marginTop="20dip" />
-
+           <ImageButton
+                android:id="@+id/lyric"
+                android:layout_width="85dip"
+                android:layout_height="54dip"
+                android:layout_marginTop="20dip" />
         </LinearLayout>
 
     </LinearLayout>
+    <TextView
+        android:id="@+id/MiniLyricShow"
+        android:layout_width="fill_parent"
+        android:layout_height="30dip"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textSize="18sp"
+        android:textColor="#1d953f"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -135,7 +149,6 @@
             android:layout_gravity="center_vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
     </LinearLayout>
 
     <include layout="@layout/audio_player_common" />

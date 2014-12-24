@@ -64,7 +64,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-
+import java.util.ArrayList;
+import java.io.File;
 
 public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     View.OnTouchListener, View.OnLongClickListener
@@ -82,6 +83,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private RepeatingImageButton mNextButton;
     private ImageButton mRepeatButton;
     private ImageButton mShuffleButton;
+    private ImageButton mLyricButton;
     private ImageButton mQueueButton;
     private Worker mAlbumArtWorker;
     private AlbumArtHandler mAlbumArtHandler;
@@ -89,6 +91,13 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private int mTouchSlop;
     private ServiceToken mToken;
     private boolean mIsBox = false;
+    public static LyrcUtil lycrUtil;
+    public static final String LRCPATH = "/storage/sdcard1/";
+    public static final String LRCPATH_NAND = "/storage/sdcard0/";
+    public static final String LRCPATH_USB = "/storage/udisk0/";
+    public static final String LRCPATH_USB1 = "/storage/udisk1/";
+    private TextView currentLrc;
+    public final static int READ_LRC = 0;
 
     public MediaPlaybackActivity()
     {
@@ -156,6 +165,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mQueueButton.setOnClickListener(mQueueListener);
         mShuffleButton = ((ImageButton) findViewById(R.id.shuffle));
         mShuffleButton.setOnClickListener(mShuffleListener);
+        mLyricButton = ((ImageButton) findViewById(R.id.lyric));
+        mLyricButton.setOnClickListener(mLyricListener);
         mRepeatButton = ((ImageButton) findViewById(R.id.repeat));
         mRepeatButton.setOnClickListener(mRepeatListener);
         
@@ -166,8 +177,112 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mProgress.setMax(1000);
 
         mTouchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+        currentLrc = (TextView) findViewById(R.id.MiniLyricShow);
+        lycrUtil = new LyrcUtil(MediaPlaybackActivity.this);
     }
     
+    private File findLrc(String path, String fileName, String trackName) {
+        File file = new File(path);
+        File lrc = null;
+        String ext = null;
+        ArrayList<String> pdirlist = new ArrayList<String>();
+        pdirlist.add(path);
+        while (pdirlist.isEmpty() == false) {
+            String headpath = pdirlist.remove(0);
+            File pfile = new File(headpath);
+            if (pfile.exists() == true) {
+                File[] files = pfile.listFiles();
+                if (files != null) {
+                    for (int i = 0; i < files.length; i++) {
+                        File pcurfile = files[i];
+                        if (pcurfile.isDirectory()) {
+                            pdirlist.add(pcurfile.getAbsolutePath());
+                        } else {
+                            ext = pcurfile.getName().substring(
+                                pcurfile.getName().lastIndexOf(".") < 0 ? 0
+                                : pcurfile.getName().lastIndexOf("."),
+                                pcurfile.getName().length());
+                            if (ext.equals(".lrc") || ext.equals(".LRC")) {
+                                if (pcurfile.getName().contains(fileName)
+                                    || pcurfile.getName().contains(trackName)) {
+                                    lrc = pcurfile;
+                                    return lrc;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    class initLrcThread extends Thread {
+        public void run() {
+            initLrc();
+        }
+    }
+    private void initLrc() {
+        if (mService == null) {
+            return;
+        }
+        try {
+            String mTrackName = mService.getTrackName();
+            String mArtistName = mService.getArtistName();
+            long songid = mService.getAudioId();
+            String mFilePath = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI + "/" + songid;//mService.getPath();
+            String mFileFullName = null;
+            String mFileName = null;
+            Cursor cursor = getContentResolver().query(Uri.parse(mFilePath),
+                                                       new String[] { MediaStore.Audio.Media.DISPLAY_NAME }, null,
+                                                       null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    mFileFullName = cursor.getString(0);
+                }
+                cursor.close();
+            }
+            mFileName = mFileFullName.substring(0,mFileFullName.lastIndexOf("."));
+            String path = LRCPATH;
+            File lrc = null;
+            lrc = findLrc(path, mFileName, mTrackName);
+            if (lrc == null) {
+                path = LRCPATH_NAND;
+                lrc = findLrc(path, mFileName, mTrackName);
+            }
+            if (lrc == null) {
+                path = LRCPATH_USB;
+                lrc = findLrc(path, mFileName, mTrackName);
+            }
+            if (lrc == null) {
+                path = LRCPATH_USB1;
+                lrc = findLrc(path, mFileName, mTrackName);
+            }
+            Message msg = mainhandler.obtainMessage(READ_LRC);
+            Bundle mBundle = new Bundle();
+            mBundle.putSerializable("lrc",lrc);
+            msg.setData(mBundle);
+            mainhandler.removeMessages(READ_LRC);
+            mainhandler.sendMessage(msg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public Handler mainhandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case READ_LRC:
+                    Bundle mBundle =msg.getData();
+                    File lrc = (File)mBundle.getSerializable("lrc");
+                    lycrUtil.ReadLRC(lrc);
+                    break;
+            }
+        }
+    };
+
+    public void setLRCText(String currentLr, boolean isEnd) {
+        currentLrc.setText(currentLr);
+    }
+
     int mInitialX = -1;
     int mLastX = -1;
     int mTextWidth = 0;
@@ -438,6 +553,12 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
     };
 
+    private View.OnClickListener mLyricListener = new View.OnClickListener() {
+        public void onClick(View v) {
+             toggleLyric();
+        }
+    };
+
     private View.OnClickListener mRepeatListener = new View.OnClickListener() {
         public void onClick(View v) {
             cycleRepeat();
@@ -456,6 +577,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             try {
                 if (mService.position() < 2000) {
                     mService.prev();
+                    initLrcThread mLrcThread = new initLrcThread();
+                    mLrcThread.start();
                 } else {
                     mService.seek(0);
                     mService.play();
@@ -470,6 +593,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             if (mService == null) return;
             try {
                 mService.next();
+                initLrcThread mLrcThread = new initLrcThread();
+                mLrcThread.start();
             } catch (RemoteException ex) {
             }
         }
@@ -795,6 +920,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                             mPauseButton.requestFocus();
                             if (mStartSeekPos < 1000) {
                                 mService.prev();
+                                initLrcThread mLrcThread = new initLrcThread();
+                                mLrcThread.start();
                             } else {
                                 mService.seek(0);
                             }
@@ -816,6 +943,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                         if (!mSeeking && mStartSeekPos >= 0) {
                             mPauseButton.requestFocus();
                             mService.next();
+                            initLrcThread mLrcThread = new initLrcThread();
+                            mLrcThread.start();
                         } else {
                             scanForward(-1, event.getEventTime() - event.getDownTime());
                             mPauseButton.requestFocus();
@@ -928,6 +1057,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 if (newpos < 0) {
                     // move to previous track
                     mService.prev();
+                    initLrcThread mLrcThread = new initLrcThread();
+                    mLrcThread.start();
                     long duration = mService.duration();
                     mStartSeekPos += duration;
                     newpos += duration;
@@ -968,6 +1099,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 if (newpos >= duration) {
                     // move to next track
                     mService.next();
+                    initLrcThread mLrcThread = new initLrcThread();
+                    mLrcThread.start();
                     mStartSeekPos -= duration; // is OK to go negative
                     newpos -= duration;
                 }
@@ -1001,6 +1134,22 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
     }
     
+    private void toggleLyric() {
+        if (mService == null) {
+            return;
+        }
+        try {
+            int shuffle = mService.getLyricMode();
+            if (shuffle == MediaPlaybackService.LYRIC_NONE) {
+                mService.setLyricMode(MediaPlaybackService.LYRIC_NORMAL);
+            } else if (shuffle == MediaPlaybackService.LYRIC_NORMAL) {
+                mService.setLyricMode(MediaPlaybackService.LYRIC_NONE);
+            }
+            setLyricButtonImage();
+        } catch (RemoteException ex) {
+        }
+    }
+
     private void toggleShuffle() {
         if (mService == null) {
             return;
@@ -1095,6 +1244,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             public void onServiceConnected(ComponentName classname, IBinder obj) {
                 mService = IMediaPlaybackService.Stub.asInterface(obj);
                 startPlayback();
+                initLrcThread mLrcThread = new initLrcThread();
+                mLrcThread.start();
                 try {
                     // Assume something is playing when the service says it is,
                     // but also if the audio ID is valid but the service is paused.
@@ -1104,8 +1255,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                         mRepeatButton.setVisibility(View.VISIBLE);
                         mShuffleButton.setVisibility(View.VISIBLE);
                         mQueueButton.setVisibility(View.VISIBLE);
+                        mLyricButton.setVisibility(View.VISIBLE);
                         setRepeatButtonImage();
                         setShuffleButtonImage();
+                        setLyricButtonImage();
                         setPauseButtonImage();
                         return;
                     }
@@ -1144,7 +1297,29 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-    
+
+    private void setLyricButtonImage(){
+        if (mService == null)
+            return;
+        try {
+           switch (mService.getLyricMode()) {
+               case MediaPlaybackService.LYRIC_NONE:
+                   mLyricButton.setImageResource(R.drawable.ic_mp_lrc_off_btn);
+                   currentLrc.setVisibility(View.INVISIBLE);
+                   break;
+               case MediaPlaybackService.LYRIC_NORMAL:
+                   mLyricButton.setImageResource(R.drawable.ic_mp_lrc_on_btn);
+                   currentLrc.setVisibility(View.VISIBLE);
+                   break;
+               default:
+                   mLyricButton.setImageResource(R.drawable.ic_mp_lrc_off_btn);
+                   currentLrc.setVisibility(View.INVISIBLE);
+                   break;
+            }
+        } catch (RemoteException ex) {
+        }
+    }
+
     private void setShuffleButtonImage() {
         if (mService == null) return;
         try {
@@ -1250,6 +1425,13 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     break;
 
                 case REFRESH:
+                    try {
+                        long position = mPosOverride < 0 ? mService.position()
+                            : mPosOverride;
+                        lycrUtil.RefreshLRC(position);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     long next = refreshNow();
                     queueNextRefresh(next);
                     break;
@@ -1284,6 +1466,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 // redraw the artist/title info and
                 // set new max for progress bar
                 updateTrackInfo();
+                initLrcThread mLrcThread = new initLrcThread();
+                mLrcThread.start();
                 setPauseButtonImage();
                 queueNextRefresh(1);
             } else if (action.equals(MediaPlaybackService.PLAYSTATE_CHANGED)) {

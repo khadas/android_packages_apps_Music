@@ -46,6 +46,8 @@ interface IMediaPlaybackService
     long getAudioId();
     void setShuffleMode(int shufflemode);
     int getShuffleMode();
+    void setLyricMode(int lyricmode);
+    int getLyricMode();
     int removeTracks(int first, int last);
     int removeTrack(long id);
     void setRepeatMode(int repeatmode);
