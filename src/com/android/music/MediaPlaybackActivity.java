@@ -70,6 +70,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     View.OnTouchListener, View.OnLongClickListener
 {
     private static final int USE_AS_RINGTONE = CHILD_MENU_BASE;
+    private static final String TAG = "MediaPlaybackActivity";
 
     private boolean mSeeking = false;
     private boolean mDeviceHasDpad;
@@ -87,6 +88,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private Toast mToast;
     private int mTouchSlop;
     private ServiceToken mToken;
+    private boolean mIsBox = false;
 
     public MediaPlaybackActivity()
     {
@@ -98,6 +100,14 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     {
         super.onCreate(icicle);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        try {
+            mIsBox = (boolean)Class.forName("android.os.SystemProperties")
+                .getMethod("getBoolean", new Class[] { String.class, Boolean.TYPE })
+                .invoke(null, new Object[] { "ro.platform.has.mbxuimode", false });
+        } catch (Exception e) {
+            Log.d(TAG,"[onCreate]Exception e:" + e);
+        }
+        Log.d(TAG,"mIsBox =" + mIsBox);
 
         mAlbumArtWorker = new Worker("album art worker");
         mAlbumArtHandler = new AlbumArtHandler(mAlbumArtWorker.getLooper());
@@ -124,21 +134,24 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         v = (View)mTrackName.getParent();
         v.setOnTouchListener(this);
         v.setOnLongClickListener(this);
-        
+
         mPrevButton = (RepeatingImageButton) findViewById(R.id.prev);
         mPrevButton.setOnClickListener(mPrevListener);
         mPrevButton.setRepeatListener(mRewListener, 260);
+        mPrevButton.setBackgroundResource(android.R.drawable.btn_default);
         mPauseButton = (ImageButton) findViewById(R.id.pause);
         mPauseButton.requestFocus();
         mPauseButton.setOnClickListener(mPauseListener);
+        mPauseButton.setBackgroundResource(android.R.drawable.btn_default);
         mNextButton = (RepeatingImageButton) findViewById(R.id.next);
         mNextButton.setOnClickListener(mNextListener);
         mNextButton.setRepeatListener(mFfwdListener, 260);
+        mNextButton.setBackgroundResource(android.R.drawable.btn_default);
         seekmethod = 1;
 
         mDeviceHasDpad = (getResources().getConfiguration().navigation ==
             Configuration.NAVIGATION_DPAD);
-        
+
         mQueueButton = (ImageButton) findViewById(R.id.curplaylist);
         mQueueButton.setOnClickListener(mQueueListener);
         mShuffleButton = ((ImageButton) findViewById(R.id.shuffle));
@@ -364,11 +377,16 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
 
     private OnSeekBarChangeListener mSeekListener = new OnSeekBarChangeListener() {
         public void onStartTrackingTouch(SeekBar bar) {
+            if (mIsBox) return;
             mLastSeekEventTime = 0;
             mFromTouch = true;
         }
         public void onProgressChanged(SeekBar bar, int progress, boolean fromuser) {
             if (!fromuser || (mService == null)) return;
+            if (mIsBox) {
+                mLastSeekEventTime = 0;
+                mFromTouch = true;
+            }
             long now = SystemClock.elapsedRealtime();
             if ((now - mLastSeekEventTime) > 250) {
                 mLastSeekEventTime = now;
@@ -384,13 +402,26 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     mPosOverride = -1;
                 }
             }
+            if (mIsBox) {
+                try {
+                    mService.seek(mPosOverride);
+                } catch (RemoteException ex) {
+                }
+                mPosOverride = -1;
+                mFromTouch = false;
+            }
         }
         public void onStopTrackingTouch(SeekBar bar) {
+            if (mIsBox) return;
+            try {
+                mService.seek(mPosOverride);
+            } catch (RemoteException ex) {
+            }
             mPosOverride = -1;
             mFromTouch = false;
         }
     };
-    
+
     private View.OnClickListener mQueueListener = new View.OnClickListener() {
         public void onClick(View v) {
             startActivity(
@@ -755,6 +786,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             switch(keyCode)
             {
                 case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if (mIsBox) break;
                     if (!useDpadMusicControl()) {
                         break;
                     }
@@ -776,6 +808,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     mPosOverride = -1;
                     return true;
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if (mIsBox) break;
                     if (!useDpadMusicControl()) {
                         break;
                     }
@@ -843,6 +876,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
+                if (mIsBox) break;
                 if (!useDpadMusicControl()) {
                     break;
                 }
@@ -852,6 +886,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 scanBackward(repcnt, event.getEventTime() - event.getDownTime());
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (mIsBox) break;
                 if (!useDpadMusicControl()) {
                     break;
                 }
@@ -872,7 +907,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
         return super.onKeyDown(keyCode, event);
     }
-    
+
     private void scanBackward(int repcnt, long delta) {
         if(mService == null) return;
         try {
@@ -884,7 +919,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 mSeeking = true;
                 if (delta < 5000) {
                     // seek at 10x speed for the first 5 seconds
-                    delta = delta * 10; 
+                    delta = delta * 10;
                 } else {
                     // seek at 40x after that
                     delta = 50000 + (delta - 5000) * 40;
