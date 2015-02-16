@@ -1140,7 +1140,7 @@ public class MusicUtils {
     }
     
     static int sActiveTabIndex = -1;
-    
+    static int hightlightId = -1;
     static boolean updateButtonBar(Activity a, int highlight) {
         final TabWidget ll = (TabWidget) a.findViewById(R.id.buttonbar);
         boolean withtabs = false;
@@ -1164,7 +1164,7 @@ public class MusicUtils {
                 sActiveTabIndex = i;
             }
             v.setTag(i);
-            v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            /*v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
@@ -1176,8 +1176,8 @@ public class MusicUtils {
                             }
                         }
                     }
-                }});
-            
+                }});*/
+
             v.setOnClickListener(new View.OnClickListener() {
 
                 public void onClick(View v) {
@@ -1224,6 +1224,7 @@ public class MusicUtils {
             default:
                 return;
         }
+        hightlightId = id;
         intent.putExtra("withtabs", true);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         a.startActivity(intent);
