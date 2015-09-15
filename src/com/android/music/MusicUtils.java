@@ -1187,6 +1187,14 @@ public class MusicUtils {
         return withtabs;
     }
 
+    static void updateFocusInNowplaying(Activity a, int focused) {
+        TextView Nowplayingtab = (TextView) a.findViewById(R.id.nowplayingtab);
+        TextView Focused = (TextView) a.findViewById(focused);
+        if (Nowplayingtab.isFocused()) {
+            Focused.requestFocus();
+        }
+    }
+
     static void processTabClick(Activity a, View v, int current) {
         int id = v.getId();
         if (id == current) {

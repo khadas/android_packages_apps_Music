@@ -242,6 +242,7 @@ public class PlaylistBrowserActivity extends ListActivity
     public void onResume() {
         super.onResume();
 
+        MusicUtils.updateFocusInNowplaying(this, R.id.playlisttab);
         MusicUtils.setSpinnerState(this);
         MusicUtils.updateNowPlaying(PlaylistBrowserActivity.this);
     }
@@ -617,6 +618,9 @@ public class PlaylistBrowserActivity extends ListActivity
         }
 
         public void setTextViewColor(View view, boolean defaultColor) {
+            if (view == null) {
+                return;
+            }
             TextView tv = (TextView)view.findViewById(R.id.line1);
             if (tv != null && mLine1Colors != null) {
                 if (defaultColor)

@@ -222,6 +222,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         registerReceiver(mTrackListListener, f);
         mTrackListListener.onReceive(null, null);
 
+        MusicUtils.updateFocusInNowplaying(this, R.id.artisttab);
         MusicUtils.setSpinnerState(this);
     }
 
@@ -663,6 +664,9 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         }
 
         public void setTextViewColor(View view, boolean defaultColor) {
+            if (view == null) {
+                return;
+            }
             TextView tv = (TextView)view.findViewById(R.id.line1);
             if (tv != null && mLine1Colors != null) {
                 if (defaultColor)

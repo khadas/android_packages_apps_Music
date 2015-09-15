@@ -339,6 +339,7 @@ public class TrackBrowserActivity extends ListActivity
         if (mTrackCursor != null) {
             getListView().invalidateViews();
         }
+        MusicUtils.updateFocusInNowplaying(this, R.id.songtab);
         MusicUtils.setSpinnerState(this);
     }
     @Override
@@ -1481,6 +1482,9 @@ public class TrackBrowserActivity extends ListActivity
         }
 
         public void setTextViewColor(View view, boolean defaultColor) {
+            if (view == null) {
+                return;
+            }
             TextView tv = (TextView)view.findViewById(R.id.line1);
             if (tv != null && mLine1Colors != null) {
                 if (defaultColor)
