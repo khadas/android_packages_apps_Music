@@ -44,6 +44,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.storage.VolumeInfo;
+import android.os.storage.StorageManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Layout;
@@ -65,6 +67,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.io.File;
 
 public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
@@ -98,6 +102,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     public static final String LRCPATH_USB1 = "/storage/udisk1/";
     private TextView currentLrc;
     public final static int READ_LRC = 0;
+    private StorageManager mStorageManager;
 
     public MediaPlaybackActivity()
     {
@@ -117,6 +122,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             Log.d(TAG,"[onCreate]Exception e:" + e);
         }
         Log.d(TAG,"mIsBox =" + mIsBox);
+
+        mStorageManager = (StorageManager)getSystemService(Context.STORAGE_SERVICE);
 
         mAlbumArtWorker = new Worker("album art worker");
         mAlbumArtHandler = new AlbumArtHandler(mAlbumArtWorker.getLooper());
@@ -242,20 +249,13 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 cursor.close();
             }
             mFileName = mFileFullName.substring(0,mFileFullName.lastIndexOf("."));
-            String path = LRCPATH;
             File lrc = null;
-            lrc = findLrc(path, mFileName, mTrackName);
-            if (lrc == null) {
-                path = LRCPATH_NAND;
-                lrc = findLrc(path, mFileName, mTrackName);
-            }
-            if (lrc == null) {
-                path = LRCPATH_USB;
-                lrc = findLrc(path, mFileName, mTrackName);
-            }
-            if (lrc == null) {
-                path = LRCPATH_USB1;
-                lrc = findLrc(path, mFileName, mTrackName);
+            List<VolumeInfo> volumes = mStorageManager.getVolumes();
+            Collections.sort(volumes, VolumeInfo.getDescriptionComparator());
+            for (VolumeInfo vol : volumes) {
+                if (vol != null && vol.isMountedReadable()) {
+                    lrc = findLrc(vol.getPath().getAbsolutePath(), mFileName, mTrackName);
+                }
             }
             Message msg = mainhandler.obtainMessage(READ_LRC);
             Bundle mBundle = new Bundle();
