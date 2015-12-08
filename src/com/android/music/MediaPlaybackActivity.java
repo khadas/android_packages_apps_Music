@@ -255,6 +255,9 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             for (VolumeInfo vol : volumes) {
                 if (vol != null && vol.isMountedReadable()) {
                     lrc = findLrc(vol.getPath().getAbsolutePath(), mFileName, mTrackName);
+                    if (lrc != null) {
+                        break;
+                    }
                 }
             }
             Message msg = mainhandler.obtainMessage(READ_LRC);
