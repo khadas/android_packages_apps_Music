@@ -718,7 +718,7 @@ public class MediaPlaybackService extends Service {
         @Override
         public void handleMessage(Message msg) {
             // Check again to make sure nothing is playing right now
-            if (isPlaying() || mPausedByTransientLossOfFocus || mServiceInUse
+            if (mPlayer == null || isPlaying() || mPausedByTransientLossOfFocus || mServiceInUse
                     || mMediaplayerHandler.hasMessages(TRACK_ENDED)) {
                 return;
             }
