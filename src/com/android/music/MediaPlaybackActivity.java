@@ -77,6 +77,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private static final int USE_AS_RINGTONE = CHILD_MENU_BASE;
     private static final String TAG = "MediaPlaybackActivity";
 
+    private boolean mPrevToSeek0 = false;
     private boolean mSeeking = false;
     private boolean mDeviceHasDpad;
     private long mStartSeekPos = 0;
@@ -578,7 +579,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         public void onClick(View v) {
             if (mService == null) return;
             try {
-                if (mService.position() < 2000) {
+                if (mService.position() < 2000 || !mPrevToSeek0) {
                     mService.prev();
                     initLrcThread mLrcThread = new initLrcThread();
                     mLrcThread.start();
