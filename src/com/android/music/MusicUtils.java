@@ -1140,7 +1140,7 @@ public class MusicUtils {
     }
     
     static int sActiveTabIndex = -1;
-    
+    static int hightlightId = -1;
     static boolean updateButtonBar(Activity a, int highlight) {
         final TabWidget ll = (TabWidget) a.findViewById(R.id.buttonbar);
         boolean withtabs = false;
@@ -1156,15 +1156,14 @@ public class MusicUtils {
             ll.setVisibility(View.VISIBLE);
         }
         for (int i = ll.getChildCount() - 1; i >= 0; i--) {
-            
             View v = ll.getChildAt(i);
             boolean isActive = (v.getId() == highlight);
             if (isActive) {
-                ll.setCurrentTab(i);
+                ll.focusCurrentTab(i);
                 sActiveTabIndex = i;
             }
             v.setTag(i);
-            v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            /*v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
@@ -1176,7 +1175,7 @@ public class MusicUtils {
                             }
                         }
                     }
-                }});
+                }});*/
             
             v.setOnClickListener(new View.OnClickListener() {
 
@@ -1186,7 +1185,13 @@ public class MusicUtils {
         }
         return withtabs;
     }
-
+    static void updateFocusInNowplaying(Activity a, int focused) {
+        TextView Nowplayingtab = (TextView) a.findViewById(R.id.nowplayingtab);
+        TextView Focused = (TextView) a.findViewById(focused);
+        if (Nowplayingtab.isFocused()) {
+            Focused.requestFocus();
+        }
+    }
     static void processTabClick(Activity a, View v, int current) {
         int id = v.getId();
         if (id == current) {
@@ -1224,6 +1229,7 @@ public class MusicUtils {
             default:
                 return;
         }
+        hightlightId = id;
         intent.putExtra("withtabs", true);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         a.startActivity(intent);

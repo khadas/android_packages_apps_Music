@@ -212,7 +212,7 @@ public class PlaylistBrowserActivity extends ListActivity
     @Override
     public void onResume() {
         super.onResume();
-
+        MusicUtils.updateFocusInNowplaying(this, R.id.playlisttab);
         MusicUtils.setSpinnerState(this);
         MusicUtils.updateNowPlaying(PlaylistBrowserActivity.this);
     }
