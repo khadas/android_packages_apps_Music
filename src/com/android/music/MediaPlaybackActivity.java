@@ -70,7 +70,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     View.OnTouchListener, View.OnLongClickListener
 {
     private static final int USE_AS_RINGTONE = CHILD_MENU_BASE;
-
+    private static final String  TAG = "MediaPlaybackActivity";
     private boolean mSeeking = false;
     private boolean mDeviceHasDpad;
     private long mStartSeekPos = 0;
@@ -87,6 +87,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private Toast mToast;
     private int mTouchSlop;
     private ServiceToken mToken;
+    private boolean mIsBox = false;
 
     public MediaPlaybackActivity()
     {
@@ -98,7 +99,14 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     {
         super.onCreate(icicle);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
+        try {
+            mIsBox = (boolean)Class.forName("android.os.SystemProperties")
+                .getMethod("getBoolean", new Class[] { String.class, Boolean.TYPE })
+                .invoke(null, new Object[] { "ro.platform.has.mbxuimode", false });
+        } catch (Exception e) {
+            Log.d(TAG,"[onCreate]Exception e:" + e);
+        }
+        Log.d(TAG,"mIsBox =" + mIsBox);
         mAlbumArtWorker = new Worker("album art worker");
         mAlbumArtHandler = new AlbumArtHandler(mAlbumArtWorker.getLooper());
 
@@ -128,12 +136,15 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mPrevButton = (RepeatingImageButton) findViewById(R.id.prev);
         mPrevButton.setOnClickListener(mPrevListener);
         mPrevButton.setRepeatListener(mRewListener, 260);
+        mPrevButton.setBackgroundResource(android.R.drawable.btn_default);
         mPauseButton = (ImageButton) findViewById(R.id.pause);
         mPauseButton.requestFocus();
         mPauseButton.setOnClickListener(mPauseListener);
+        mPauseButton.setBackgroundResource(android.R.drawable.btn_default);
         mNextButton = (RepeatingImageButton) findViewById(R.id.next);
         mNextButton.setOnClickListener(mNextListener);
         mNextButton.setRepeatListener(mFfwdListener, 260);
+        mNextButton.setBackgroundResource(android.R.drawable.btn_default);
         seekmethod = 1;
 
         mDeviceHasDpad = (getResources().getConfiguration().navigation ==
@@ -755,6 +766,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             switch(keyCode)
             {
                 case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if (mIsBox) break;
                     if (!useDpadMusicControl()) {
                         break;
                     }
@@ -776,6 +788,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     mPosOverride = -1;
                     return true;
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if (mIsBox) break;
                     if (!useDpadMusicControl()) {
                         break;
                     }
@@ -843,6 +856,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
+                if (mIsBox) break;
                 if (!useDpadMusicControl()) {
                     break;
                 }
@@ -852,6 +866,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 scanBackward(repcnt, event.getEventTime() - event.getDownTime());
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (mIsBox) break;
                 if (!useDpadMusicControl()) {
                     break;
                 }
