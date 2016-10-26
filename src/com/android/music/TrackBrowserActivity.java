@@ -309,6 +309,7 @@ public class TrackBrowserActivity extends ListActivity
         if (mTrackCursor != null) {
             getListView().invalidateViews();
         }
+        MusicUtils.updateFocusInNowplaying(this, R.id.songtab);
         MusicUtils.setSpinnerState(this);
     }
     @Override

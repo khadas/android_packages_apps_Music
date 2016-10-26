@@ -192,7 +192,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         f.addAction(MediaPlaybackService.QUEUE_CHANGED);
         registerReceiver(mTrackListListener, f);
         mTrackListListener.onReceive(null, null);
-
+        MusicUtils.updateFocusInNowplaying(this, R.id.artisttab);
         MusicUtils.setSpinnerState(this);
     }
 

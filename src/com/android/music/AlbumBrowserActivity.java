@@ -189,7 +189,7 @@ public class AlbumBrowserActivity extends ListActivity
         f.addAction(MediaPlaybackService.QUEUE_CHANGED);
         registerReceiver(mTrackListListener, f);
         mTrackListListener.onReceive(null, null);
-
+        MusicUtils.updateFocusInNowplaying(this, R.id.albumtab);
         MusicUtils.setSpinnerState(this);
     }
 
