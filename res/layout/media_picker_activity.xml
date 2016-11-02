@@ -30,9 +30,11 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:textSize="18sp"
-        android:drawSelectorOnTop="false"
-        android:fastScrollEnabled="true" /> 
-
+        android:fastScrollEnabled="true"
+        android:drawSelectorOnTop="true"
+        android:footerDividersEnabled="true"
+        android:divider="@color/lightgray"
+        android:dividerHeight="1px"/>
     <include layout="@layout/nowplaying" />
 
 </LinearLayout>

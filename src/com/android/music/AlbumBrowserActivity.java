@@ -62,6 +62,7 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.graphics.Color;
 
 import java.text.Collator;
 
@@ -112,6 +113,9 @@ public class AlbumBrowserActivity extends ListActivity
         ListView lv = getListView();
         lv.setOnCreateContextMenuListener(this);
         lv.setTextFilterEnabled(true);
+        lv.setBackgroundColor(Color.parseColor("#000000"));
+        lv.setCacheColorHint(0);
+        lv.setSelector(R.drawable.selector);
 
         mAdapter = (AlbumListAdapter) getLastNonConfigurationInstance();
         if (mAdapter == null) {

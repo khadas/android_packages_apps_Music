@@ -60,6 +60,7 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorTreeAdapter;
 import android.widget.TextView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
+import android.graphics.Color;
 
 import java.text.Collator;
 
@@ -108,6 +109,9 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         ExpandableListView lv = getExpandableListView();
         lv.setOnCreateContextMenuListener(this);
         lv.setTextFilterEnabled(true);
+        lv.setBackgroundColor(Color.parseColor("#000000"));
+        lv.setCacheColorHint(0);
+        lv.setSelector(R.drawable.selector);
 
         mAdapter = (ArtistAlbumListAdapter) getLastNonConfigurationInstance();
         if (mAdapter == null) {

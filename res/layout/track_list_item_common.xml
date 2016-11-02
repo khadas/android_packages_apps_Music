@@ -28,7 +28,6 @@
 
     <TextView android:id="@+id/duration"
         android:textSize="12sp"
-        android:textColor="?android:attr/textColorTertiary"
         android:textStyle="bold"
         android:paddingLeft="4dip"
         android:paddingRight="11dip"
@@ -36,7 +35,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/line1"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:textColor="@color/white"/>
 
     <!-- The height is set to half the height of the parent, which is 64 dip -->
     <TextView android:id="@+id/line1"
@@ -48,7 +48,8 @@
         android:layout_toRightOf="@id/icon"
         android:layout_toLeftOf="@id/duration"
         android:ellipsize="marquee"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:textColor="@color/white"/>
 
     <!-- The height is set to half the height of the parent, which is 64 dip -->
     <TextView android:id="@+id/line2" android:visibility="visible"
@@ -62,7 +63,8 @@
         android:layout_toRightOf="@id/icon"
         android:layout_toLeftOf="@id/duration"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"/>
 
     <ImageView android:id="@+id/play_indicator"
         android:layout_alignParentRight="true"

@@ -55,7 +55,8 @@
         android:layout_toRightOf="@id/radio"
         android:layout_toLeftOf="@id/duration"
         android:ellipsize="end"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:textColor="@color/white"/>
 
     <TextView android:id="@+id/line2" android:visibility="visible"
         android:maxLines="2"
@@ -67,7 +68,8 @@
         android:layout_toRightOf="@id/radio"
         android:layout_toLeftOf="@id/duration"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"/>
 
     <ImageView android:id="@+id/play_indicator"
         android:layout_alignParentRight="true"

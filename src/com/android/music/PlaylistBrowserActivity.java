@@ -53,6 +53,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.graphics.Color;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -142,7 +143,9 @@ public class PlaylistBrowserActivity extends ListActivity
         ListView lv = getListView();
         lv.setOnCreateContextMenuListener(this);
         lv.setTextFilterEnabled(true);
-
+        lv.setBackgroundColor(Color.parseColor("#000000"));
+        lv.setCacheColorHint(0);
+        lv.setSelector(R.drawable.selector);
         mAdapter = (PlaylistListAdapter) getLastNonConfigurationInstance();
         if (mAdapter == null) {
             //Log.i("@@@", "starting query");

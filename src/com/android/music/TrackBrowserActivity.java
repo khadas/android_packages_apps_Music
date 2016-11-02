@@ -61,6 +61,7 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.graphics.Color;
 
 import java.text.Collator;
 import java.util.Arrays;
@@ -434,8 +435,9 @@ public class TrackBrowserActivity extends ListActivity
             } catch (Exception ex) {
             }
         }
-        mTrackList.setBackgroundColor(0xff000000);
+        mTrackList.setBackgroundColor(Color.parseColor("#000000"));
         mTrackList.setCacheColorHint(0);
+        mTrackList.setSelector(R.drawable.selector);
     }
 
     private void setTitle() {
