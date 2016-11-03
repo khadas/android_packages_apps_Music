@@ -423,7 +423,7 @@ public class TrackBrowserActivity extends ListActivity
     }
 
     private void setAlbumArtBackground() {
-        if (!mEditMode) {
+        /*if (!mEditMode) {
             try {
                 long albumid = Long.valueOf(mAlbumId);
                 Bitmap bm = MusicUtils.getArtwork(TrackBrowserActivity.this, -1, albumid, false);
@@ -434,7 +434,7 @@ public class TrackBrowserActivity extends ListActivity
                 }
             } catch (Exception ex) {
             }
-        }
+        }*/
         mTrackList.setBackgroundColor(Color.parseColor("#000000"));
         mTrackList.setCacheColorHint(0);
         mTrackList.setSelector(R.drawable.selector);
