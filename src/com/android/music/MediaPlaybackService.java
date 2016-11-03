@@ -77,6 +77,8 @@ public class MediaPlaybackService extends Service {
     public static final int SHUFFLE_NONE = 0;
     public static final int SHUFFLE_NORMAL = 1;
     public static final int SHUFFLE_AUTO = 2;
+    public static final int LYRIC_NONE = 0;
+    public static final int LYRIC_NORMAL = 1;
     
     public static final int REPEAT_NONE = 0;
     public static final int REPEAT_CURRENT = 1;
@@ -112,6 +114,7 @@ public class MediaPlaybackService extends Service {
     private MultiPlayer mPlayer;
     private String mFileToPlay;
     private int mShuffleMode = SHUFFLE_NONE;
+    private int mLyricMode = LYRIC_NONE;
     private int mRepeatMode = REPEAT_NONE;
     private int mMediaMountedCount = 0;
     private long [] mAutoShuffleList = null;
@@ -469,6 +472,7 @@ public class MediaPlaybackService extends Service {
         }
         ed.putInt("repeatmode", mRepeatMode);
         ed.putInt("shufflemode", mShuffleMode);
+        ed.putInt("lyricmode",mLyricMode);
         SharedPreferencesCompat.apply(ed);
 
         //Log.i("@@@@ service", "saved state in " + (System.currentTimeMillis() - start) + " ms");
@@ -1678,6 +1682,12 @@ public class MediaPlaybackService extends Service {
     public int getShuffleMode() {
         return mShuffleMode;
     }
+    public void setLyricMode(int lyricmode) {
+        mLyricMode = lyricmode;
+    }
+    public int getLyricMode() {
+        return mLyricMode;
+    }
     
     public void setRepeatMode(int repeatmode) {
         synchronized(this) {
@@ -2161,6 +2171,12 @@ public class MediaPlaybackService extends Service {
         }
         public int getShuffleMode() {
             return mService.get().getShuffleMode();
+        }
+        public void setLyricMode(int lyricmode) {
+            mService.get().setLyricMode(lyricmode);
+        }
+        public int getLyricMode() {
+            return mService.get().getLyricMode();
         }
         public int removeTracks(int first, int last) {
             return mService.get().removeTracks(first, last);

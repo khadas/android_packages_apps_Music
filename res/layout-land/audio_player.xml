@@ -63,6 +63,10 @@
 
                <ImageButton android:id="@+id/repeat"
                     android:layout_width="82dip"
+                    android:layout_height="45dip"
+                    android:layout_marginRight="8dip"/>
+               <ImageButton android:id="@+id/lyric"
+                    android:layout_width="82dip"
                     android:layout_height="45dip" />
 
             </LinearLayout>
@@ -145,6 +149,16 @@
         </LinearLayout>
 
     </LinearLayout>
+    <TextView
+        android:id="@+id/MiniLyricShow"
+        android:layout_width="fill_parent"
+        android:layout_height="30dip"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textSize="18sp"
+        android:textColor="#1d953f"
+        android:textStyle="bold" />
 
     <include layout="@layout/audio_player_common" />
 
