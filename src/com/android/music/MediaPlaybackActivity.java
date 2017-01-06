@@ -556,14 +556,15 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         public void onClick(View v) {
             if (mService == null) return;
             try {
-                if (mService.position() < 2000) {
+                //if (mService.position() < 2000) {
                     mService.prev();
                     initLrcThread mLrcThread = new initLrcThread();
                     mLrcThread.start();
+                /*
                 } else {
                     mService.seek(0);
                     mService.play();
-                }
+                }*/
             } catch (RemoteException ex) {
             }
         }
