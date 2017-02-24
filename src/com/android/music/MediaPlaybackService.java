@@ -558,6 +558,7 @@ public class MediaPlaybackService extends Service {
             // - music service is restarted, service restores state, doesn't find
             //   the "current" file, goes to the next and: playback starts on its
             //   own, potentially at some random inconvenient time.
+            /*
             mOpenFailedCounter = 20;
             mQuietMode = true;
             openCurrentAndNext();
@@ -573,7 +574,7 @@ public class MediaPlaybackService extends Service {
             Log.d(LOGTAG, "restored queue, currently at position "
                     + position() + "/" + duration()
                     + " (requested " + seekpos + ")");
-            
+            */
             int repmode = mPreferences.getInt("repeatmode", REPEAT_NONE);
             if (repmode != REPEAT_ALL && repmode != REPEAT_CURRENT) {
                 repmode = REPEAT_NONE;
@@ -753,13 +754,20 @@ public class MediaPlaybackService extends Service {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     String action = intent.getAction();
+                    String mountpath =  intent.getData().getPath();
+                    String currentpath = getDataPath();
                     if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
-                        saveQueue(true);
-                        mQueueIsSaveable = false;
-                        closeExternalStorageFiles(intent.getData().getPath());
+                        if (currentpath != null && currentpath.startsWith(mountpath)) {
+                            saveQueue(true);
+                            mQueueIsSaveable = false;
+                            closeExternalStorageFiles(intent.getData().getPath());
+                        }
                     } else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) {
                         mMediaMountedCount++;
                         mCardId = MusicUtils.getCardId(MediaPlaybackService.this);
+                        if ((currentpath == null) || (currentpath != null && currentpath.startsWith( mountpath))) {
+                            reloadQueue();
+                        }
                         reloadQueue();
                         mQueueIsSaveable = true;
                         notifyChange(QUEUE_CHANGED);
@@ -772,6 +780,19 @@ public class MediaPlaybackService extends Service {
             iFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
             iFilter.addDataScheme("file");
             registerReceiver(mUnmountReceiver, iFilter);
+        }
+    }
+
+    private String getDataPath() {
+        synchronized (this) {
+            if (mCursor == null) {
+                return null;
+            }
+            try {
+                return mCursor.getString(mCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
+            } catch (Exception e) {
+            }
+            return null;
         }
     }
 
@@ -1950,6 +1971,9 @@ public class MediaPlaybackService extends Service {
         }
 
         public void stop() {
+            if (mIsInitialized) {
+                setNextDataSource(null);
+            }
             mCurrentMediaPlayer.reset();
             mIsInitialized = false;
         }
