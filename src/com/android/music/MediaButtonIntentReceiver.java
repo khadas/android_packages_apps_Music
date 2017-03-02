@@ -19,6 +19,7 @@ package com.android.music;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.Message;
@@ -35,6 +36,7 @@ public class MediaButtonIntentReceiver extends BroadcastReceiver {
     private static long mLastClickTime = 0;
     private static boolean mDown = false;
     private static boolean mLaunched = false;
+    private Context mContext;
 
     private static Handler mHandler = new Handler() {
         @Override
@@ -58,12 +60,13 @@ public class MediaButtonIntentReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String intentAction = intent.getAction();
+        mContext = context;
         if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intentAction)) {
             Intent i = new Intent(context, MediaPlaybackService.class);
             i.setAction(MediaPlaybackService.SERVICECMD);
             i.putExtra(MediaPlaybackService.CMDNAME, MediaPlaybackService.CMDPAUSE);
             context.startService(i);
-        } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) {
+        } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction) && !isMediaKeyStop()) {
             KeyEvent event = (KeyEvent)
                     intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             
@@ -145,5 +148,10 @@ public class MediaButtonIntentReceiver extends BroadcastReceiver {
                 }
             }
         }
+    }
+
+    private boolean isMediaKeyStop() {
+        SharedPreferences DealData = mContext.getSharedPreferences(MediaPlaybackService.MEDIAKEYSTATUSDATA, Context.MODE_PRIVATE);
+        return DealData.getBoolean(MediaPlaybackService.MEDIAKEYSTATUS, false);
     }
 }

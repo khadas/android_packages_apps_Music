@@ -48,6 +48,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.PowerManager.WakeLock;
+import android.os.SystemProperties;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -101,6 +102,9 @@ public class MediaPlaybackService extends Service {
     public static final String PAUSE_ACTION = "com.android.music.musicservicecommand.pause";
     public static final String PREVIOUS_ACTION = "com.android.music.musicservicecommand.previous";
     public static final String NEXT_ACTION = "com.android.music.musicservicecommand.next";
+
+    public static final String MEDIAKEYSTATUSDATA = "MediaKeyStatusData";
+    public static final String MEDIAKEYSTATUS = "MediaKeyStatus";
 
     private static final int TRACK_ENDED = 1;
     private static final int RELEASE_WAKELOCK = 2;
@@ -164,6 +168,8 @@ public class MediaPlaybackService extends Service {
     private static final int IDLE_DELAY = 60000;
 
     private RemoteControlClient mRemoteControlClient;
+    private boolean mIsTv = false;
+    private static Context mContext;
 
     private Handler mMediaplayerHandler = new Handler() {
         float mCurrentVolume = 1.0f;
@@ -302,8 +308,18 @@ public class MediaPlaybackService extends Service {
                 int[] appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
                 mAppWidgetProvider.performUpdate(MediaPlaybackService.this, appWidgetIds);
             }
+            if (mIsTv && CMDSTOP.equals(cmd) && PAUSE_ACTION.equals(action)) {
+                StopMediaKey(true);
+            }
         }
     };
+
+    public static void StopMediaKey(boolean stopstatus) {
+        SharedPreferences DealData = mContext.getSharedPreferences(MEDIAKEYSTATUSDATA, Context.MODE_PRIVATE);
+        Editor editor = DealData.edit();
+        editor.putBoolean(MEDIAKEYSTATUS, stopstatus);
+        editor.commit();
+    }
 
     private OnAudioFocusChangeListener mAudioFocusListener = new OnAudioFocusChangeListener() {
         public void onAudioFocusChange(int focusChange) {
@@ -318,6 +334,8 @@ public class MediaPlaybackService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        mContext = this;
+        mIsTv = SystemProperties.getBoolean("ro.platform.has.tvuimode", false);
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         ComponentName rec = new ComponentName(getPackageName(),
                 MediaButtonIntentReceiver.class.getName());
