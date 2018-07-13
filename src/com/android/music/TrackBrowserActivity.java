@@ -433,7 +433,7 @@ public class TrackBrowserActivity extends ListActivity
             } catch (Exception ex) {
             }
         }
-        mTrackList.setBackgroundColor(0xff000000);
+        //mTrackList.setBackgroundColor(0xff000000);
         mTrackList.setCacheColorHint(0);
     }
 
