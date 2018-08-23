@@ -114,7 +114,7 @@ public class TrackBrowserActivity extends ListActivity {
         // don't set the album art until after the view has been layed out
         mTrackList.post(new Runnable() {
             public void run() {
-                mTrackList.setBackgroundColor(Color.WHITE);
+//                mTrackList.setBackgroundColor(Color.WHITE);
                 mTrackList.setCacheColorHint(0);
             }
         });

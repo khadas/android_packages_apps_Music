@@ -11,6 +11,8 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
+LOCAL_CERTIFICATE := platform
+
 include $(BUILD_PACKAGE)
 
 # Use the folloing include to make our test apk.

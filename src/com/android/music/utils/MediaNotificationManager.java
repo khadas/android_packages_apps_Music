@@ -17,6 +17,7 @@
 package com.android.music.utils;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -51,6 +52,7 @@ public class MediaNotificationManager extends BroadcastReceiver {
     public static final String ACTION_PLAY = "com.android.music.play";
     public static final String ACTION_PREV = "com.android.music.prev";
     public static final String ACTION_NEXT = "com.android.music.next";
+    private static final String CHANNEL_ID_MUSIC_PLAY = "music_media_play";
 
     private final MediaPlaybackService mService;
     private MediaSession.Token mSessionToken;
@@ -231,7 +233,7 @@ public class MediaNotificationManager extends BroadcastReceiver {
             return null;
         }
 
-        Notification.Builder notificationBuilder = new Notification.Builder(mService);
+        Notification.Builder notificationBuilder = new Notification.Builder(mService, getNotifyChannelMusicPlayId(mService));
         int playPauseButtonPosition = 0;
 
         // If skip to previous action is enabled
@@ -349,5 +351,25 @@ public class MediaNotificationManager extends BroadcastReceiver {
                 }
             }
         });
+    }
+
+    private String getNotifyChannelMusicPlayId(Context context){
+        // create android channel
+        NotificationChannel androidChannel = new NotificationChannel(CHANNEL_ID_MUSIC_PLAY,
+                CHANNEL_ID_MUSIC_PLAY, NotificationManager.IMPORTANCE_LOW);
+        // Sets whether notifications posted to this channel should display notification lights
+        androidChannel.enableLights(false);
+        androidChannel.enableVibration(false);
+        // Sets whether notification posted to this channel should vibrate.
+        //androidChannel.enableVibration(true);
+        // Sets the notification light color for notifications posted to this channel
+        //androidChannel.setLightColor(Color.GREEN);
+        // Sets whether notifications posted to this channel appear on the lockscreen or not
+        androidChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+
+        final NotificationManager nm =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.createNotificationChannel(androidChannel);
+        return CHANNEL_ID_MUSIC_PLAY;
     }
 }
