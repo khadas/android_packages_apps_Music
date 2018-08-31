@@ -127,12 +127,7 @@ public class MediaPlaybackActivity
         mPrevButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (getMediaController() == null) return;
-                if (getMediaController().getPlaybackState().getPosition() < 2000) {
                     getMediaController().getTransportControls().skipToPrevious();
-                } else {
-                    getMediaController().getTransportControls().seekTo(0);
-                    getMediaController().getTransportControls().play();
-                }
             }
         });
         mPrevButton.setRepeatListener(new RepeatingImageButton.RepeatListener() {

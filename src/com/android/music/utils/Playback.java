@@ -137,6 +137,10 @@ public class Playback implements AudioManager.OnAudioFocusChangeListener, OnComp
         return mMediaPlayer != null ? mMediaPlayer.getCurrentPosition() : mCurrentPosition;
     }
 
+    public void setCurrentStreamPosition(int pos) {
+        mCurrentPosition = pos;
+    }
+
     public void play(QueueItem item) {
         mPlayOnFocusGain = true;
         tryToGetAudioFocus();

@@ -52,7 +52,7 @@ public class MediaPlaybackService extends MediaBrowserService implements Playbac
     public static final String ACTION_CMD = "com.android.music.ACTION_CMD";
     public static final String CMD_NAME = "CMD_NAME";
     public static final String CMD_PAUSE = "CMD_PAUSE";
-    public static final String CMD_REPEAT = "CMD_PAUSE";
+    public static final String CMD_REPEAT = "CMD_REPEAT";
     public static final String REPEAT_MODE = "REPEAT_MODE";
 
     public enum RepeatMode { REPEAT_NONE, REPEAT_ALL, REPEAT_CURRENT }
@@ -411,6 +411,9 @@ public class MediaPlaybackService extends MediaBrowserService implements Playbac
                 // first song.
                 mCurrentIndexOnQueue = 0;
             }
+            if (mPlayingQueue.size() == 1) {
+                mPlayback.setCurrentStreamPosition(0);
+            }
             if (QueueHelper.isIndexPlayable(mCurrentIndexOnQueue, mPlayingQueue)) {
                 handlePlayRequest();
             } else {
@@ -430,6 +433,9 @@ public class MediaPlaybackService extends MediaBrowserService implements Playbac
                 // This sample's behavior: skipping to previous when in first song restarts the
                 // first song.
                 mCurrentIndexOnQueue = 0;
+            }
+            if (mPlayingQueue.size() == 1) {
+                mPlayback.setCurrentStreamPosition(0);
             }
             if (QueueHelper.isIndexPlayable(mCurrentIndexOnQueue, mPlayingQueue)) {
                 handlePlayRequest();
@@ -699,6 +705,7 @@ public class MediaPlaybackService extends MediaBrowserService implements Playbac
                     break;
                 case REPEAT_CURRENT:
                     // Do not change the index
+                    mPlayback.setCurrentStreamPosition(0);
                     break;
                 case REPEAT_NONE:
                 default:
