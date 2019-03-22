@@ -236,13 +236,15 @@ public class MediaPlaybackActivity
                     long now = SystemClock.elapsedRealtime();
                     if ((now - mLastSeekEventTime) > 250) {
                         mLastSeekEventTime = now;
-                        long duration = getMediaController().getMetadata().getLong(
-                                MediaMetadata.METADATA_KEY_DURATION);
-                        long position = duration * progress / 1000;
-                        getMediaController().getTransportControls().seekTo(position);
-                        // trackball event, allow progress updates
-                        if (!mmFromTouch) {
-                            updateProgressBar();
+                        MediaMetadata metadata = getMediaController().getMetadata();
+                        if (metadata != null) {
+                            long duration = metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
+                            long position = duration * progress / 1000;
+                            getMediaController().getTransportControls().seekTo(position);
+                            // trackball event, allow progress updates
+                            if (!mmFromTouch) {
+                                updateProgressBar();
+                            }
                         }
                     }
                 }
