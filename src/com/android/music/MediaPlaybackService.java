@@ -163,6 +163,7 @@ public class MediaPlaybackService extends Service {
     private static final int IDLE_DELAY = 60000;
 
     private RemoteControlClient mRemoteControlClient;
+    public static final boolean USE_NEXT_MEDIA_PLAYER = false;
 
     private Handler mMediaplayerHandler = new Handler() {
         float mCurrentVolume = 1.0f;
@@ -1160,6 +1161,14 @@ public class MediaPlaybackService extends Service {
                 gotoNext(true);
             }
 
+            if (!USE_NEXT_MEDIA_PLAYER && mPlayer.position() >= duration) {
+                mPlayer.seek(0);
+                Log.v(LOGTAG, "play reseek mPlayer.position()=" + mPlayer.position());
+                openCurrentAndNext();
+                play();
+                return;
+            }
+
             mPlayer.start();
             // make sure we fade in, in case a previous fadein was stopped because
             // of another focus loss
@@ -1896,17 +1905,32 @@ public class MediaPlaybackService extends Service {
             }
         }
 
-        private boolean setDataSourceImpl(MediaPlayer player, String path) {
+        private boolean setDataSourceImpl(CompatMediaPlayer player, String path) {
+            return setDataSourceImpl(player, path, false);
+        }
+
+        private boolean setDataSourceImpl(CompatMediaPlayer player, String path, boolean notPrepare) {
             try {
                 player.reset();
                 player.setOnPreparedListener(null);
-                if (path.startsWith("content://")) {
-                    player.setDataSource(MediaPlaybackService.this, Uri.parse(path));
+                if (!notPrepare) {
+                    if (path.startsWith("content://")) {
+                        player.setDataSource(MediaPlaybackService.this, Uri.parse(path));
+                    } else {
+                        player.setDataSource(path);
+                    }
                 } else {
-                    player.setDataSource(path);
+                    if (path.startsWith("content://")) {
+                        player.setUriPath(Uri.parse(path));
+                    } else {
+                        player.setFilePath(path);
+                    }
                 }
                 player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                player.prepare();
+                if (!notPrepare) {
+                    player.prepare();
+                } else {
+                }
             } catch (IOException ex) {
                 // TODO: notify the user why the file couldn't be opened
                 return false;
@@ -1934,14 +1958,19 @@ public class MediaPlaybackService extends Service {
             }
             mNextMediaPlayer = new CompatMediaPlayer();
             mNextMediaPlayer.setWakeMode(MediaPlaybackService.this, PowerManager.PARTIAL_WAKE_LOCK);
-            mNextMediaPlayer.setAudioSessionId(getAudioSessionId());
-            if (setDataSourceImpl(mNextMediaPlayer, path)) {
-                mCurrentMediaPlayer.setNextMediaPlayer(mNextMediaPlayer);
+            int audioSessionId = getAudioSessionId();
+            mNextMediaPlayer.setAudioSessionId(audioSessionId);
+            if (USE_NEXT_MEDIA_PLAYER) {
+                if (setDataSourceImpl(mNextMediaPlayer, path)) {
+                    mCurrentMediaPlayer.setNextMediaPlayer(mNextMediaPlayer);
+                } else {
+                    // failed to open next, we'll transition the old fashioned way,
+                    // which will skip over the faulty file
+                    mNextMediaPlayer.release();
+                    mNextMediaPlayer = null;
+                }
             } else {
-                // failed to open next, we'll transition the old fashioned way,
-                // which will skip over the faulty file
-                mNextMediaPlayer.release();
-                mNextMediaPlayer = null;
+                setDataSourceImpl(mNextMediaPlayer, path, true);
             }
         }
 
@@ -1980,6 +2009,31 @@ public class MediaPlaybackService extends Service {
                 if (mp == mCurrentMediaPlayer && mNextMediaPlayer != null) {
                     mCurrentMediaPlayer.release();
                     mCurrentMediaPlayer = mNextMediaPlayer;
+                    if (!USE_NEXT_MEDIA_PLAYER) {
+                        try {
+                            if (!mCurrentMediaPlayer.mIsPrepared) {
+                                if (!"".equals(mCurrentMediaPlayer.mFilePath)) {
+                                    mCurrentMediaPlayer.setDataSource(mCurrentMediaPlayer.mFilePath);
+                                    mCurrentMediaPlayer.prepare();
+                                    mCurrentMediaPlayer.setIsPrepared(true);
+                                    mCurrentMediaPlayer.start();
+                                } else if(null != mCurrentMediaPlayer.mUriPath){
+                                    mCurrentMediaPlayer.setDataSource(MediaPlaybackService.this, mCurrentMediaPlayer.mUriPath);
+                                    mCurrentMediaPlayer.prepare();
+                                    mCurrentMediaPlayer.setIsPrepared(true);
+                                    mCurrentMediaPlayer.start();
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            mWakeLock.acquire(30000);
+                            mNextMediaPlayer.release();
+                            mNextMediaPlayer = null;
+                            mHandler.sendEmptyMessage(TRACK_ENDED);
+                            mHandler.sendEmptyMessage(RELEASE_WAKELOCK);
+                            return;
+                        }
+                    }
                     mNextMediaPlayer = null;
                     mHandler.sendEmptyMessage(TRACK_WENT_TO_NEXT);
                 } else {
@@ -2046,6 +2100,9 @@ public class MediaPlaybackService extends Service {
     static class CompatMediaPlayer extends MediaPlayer implements OnCompletionListener {
         private boolean mCompatMode = true;
         private MediaPlayer mNextPlayer;
+        private Uri mUriPath;
+        private String mFilePath;
+        private boolean mIsPrepared;
         private OnCompletionListener mCompletion;
 
         public CompatMediaPlayer() {
@@ -2064,6 +2121,20 @@ public class MediaPlaybackService extends Service {
             } else {
                 super.setNextMediaPlayer(next);
             }
+        }
+
+        public void setUriPath(Uri uri) {
+            mFilePath = "";
+            mUriPath = uri;
+        }
+
+        public void setFilePath(String path) {
+            mUriPath = null;
+            mFilePath = path;
+        }
+
+        public void setIsPrepared(boolean prepared) {
+            mIsPrepared = prepared;
         }
 
         @Override

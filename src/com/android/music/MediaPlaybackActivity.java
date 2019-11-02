@@ -1146,7 +1146,12 @@ public class MediaPlaybackActivity extends Activity
         try {
             long pos = mPosOverride < 0 ? mService.position() : mPosOverride;
             if ((pos >= 0) && (mDuration > 0)) {
-                mCurrentTime.setText(MusicUtils.makeTimeString(this, pos / 1000));
+                if (!MediaPlaybackService.USE_NEXT_MEDIA_PLAYER
+                        && pos > mDuration) {
+                    mCurrentTime.setText(MusicUtils.makeTimeString(this, mDuration / 1000));
+                } else {
+                    mCurrentTime.setText(MusicUtils.makeTimeString(this, pos / 1000));
+                }
                 int progress = (int) (1000 * pos / mDuration);
                 mProgress.setProgress(progress);
 
