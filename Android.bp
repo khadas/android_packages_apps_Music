@@ -17,7 +17,10 @@ license {
 
 android_app {
     name: "Music",
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/com/android/music/IMediaPlaybackService.aidl",
+    ],
     resource_dirs: ["kotlin/res"],
     sdk_version: "current",
     product_specific: true,
