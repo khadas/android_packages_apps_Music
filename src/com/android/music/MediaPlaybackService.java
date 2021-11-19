@@ -1341,7 +1341,7 @@ public class MediaPlaybackService extends Service {
      * assigned to mPlayPos;
      */
     private int getNextPosition(boolean force) {
-        if (mRepeatMode == REPEAT_CURRENT) {
+        if (!force && mRepeatMode == REPEAT_CURRENT) {
             if (mPlayPos < 0) return 0;
             return mPlayPos;
         } else if (mShuffleMode == SHUFFLE_NORMAL) {
