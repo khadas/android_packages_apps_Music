@@ -319,7 +319,7 @@ public class MediaPlaybackService extends Service {
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         ComponentName rec =
                 new ComponentName(getPackageName(), MediaButtonIntentReceiver.class.getName());
-        mAudioManager.registerMediaButtonEventReceiver(rec);
+        //mAudioManager.registerMediaButtonEventReceiver(rec);
 
         Intent i = new Intent(Intent.ACTION_MEDIA_BUTTON);
         i.setComponent(rec);
@@ -327,6 +327,7 @@ public class MediaPlaybackService extends Service {
                 this /*context*/, 0 /*requestCode, ignored*/, i /*intent*/, 0 /*flags*/);
         mRemoteControlClient = new RemoteControlClient(pi);
         mAudioManager.registerRemoteControlClient(mRemoteControlClient);
+        mAudioManager.registerMediaButtonEventReceiver(pi);
 
         int flags = RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS
                 | RemoteControlClient.FLAG_KEY_MEDIA_NEXT | RemoteControlClient.FLAG_KEY_MEDIA_PLAY
