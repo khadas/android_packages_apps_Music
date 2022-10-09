@@ -38,6 +38,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -194,8 +195,18 @@ public class AudioPreview
     }
 
     @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean result = super.onTouchEvent(event);
+        if (result) {//see the Activity.java
+            Log.v(TAG, "touch dialog activity outside");
+        }
+        return result;
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
+        Log.v(TAG, "onPause");
         mUiPaused = true;
         if (mProgressRefresher != null) {
             mProgressRefresher.removeCallbacksAndMessages(null);
@@ -205,6 +216,7 @@ public class AudioPreview
     @Override
     public void onResume() {
         super.onResume();
+        Log.v(TAG, "onResume");
         mUiPaused = false;
         if (mPlayer.isPrepared()) {
             showPostPrepareUI();
@@ -220,6 +232,7 @@ public class AudioPreview
 
     @Override
     public void onDestroy() {
+        Log.v(TAG, "onDestroy");
         stopPlayback();
         super.onDestroy();
     }
@@ -237,10 +250,13 @@ public class AudioPreview
 
     @Override
     public void onUserLeaveHint() {
+        Log.v(TAG, "onUserLeaveHint");
         stopPlayback();
         finish();
         super.onUserLeaveHint();
     }
+
+
 
     public void onPrepared(MediaPlayer mp) {
         if (isFinishing()) return;
@@ -254,6 +270,8 @@ public class AudioPreview
         ProgressBar pb = (ProgressBar) findViewById(R.id.spinner);
         pb.setVisibility(View.GONE);
         mDuration = mPlayer.getDuration();
+        Log.v(TAG, "showPostPrepareUI mDuration=" + mDuration
+                + ", currentPos=" + mPlayer.getCurrentPosition());
         if (mDuration != 0) {
             mSeekBar.setMax(mDuration);
             mSeekBar.setVisibility(View.VISIBLE);
@@ -306,6 +324,7 @@ public class AudioPreview
     };
 
     private void start() {
+        Log.v(TAG, "player start");
         mAudioManager.requestAudioFocus(mAudioFocusListener, AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
         mPlayer.start();
@@ -368,12 +387,14 @@ public class AudioPreview
     };
 
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        Log.e(TAG, "onError what=" + what + ", extra=" + extra);
         Toast.makeText(this, R.string.playback_failed, Toast.LENGTH_SHORT).show();
         finish();
         return true;
     }
 
     public void onCompletion(MediaPlayer mp) {
+        Log.v(TAG, "onCompletion mDuration=" + mDuration);
         mSeekBar.setProgress(mDuration);
         updatePlayPause();
     }
@@ -415,6 +436,7 @@ public class AudioPreview
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.v(TAG, "onKeyDown " + keyCode + ", "+event.getAction());
         switch (keyCode) {
             case KeyEvent.KEYCODE_HEADSETHOOK:
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
